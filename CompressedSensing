@@ -1,0 +1,15 @@
+function myGradient(A,S,b)
+    n = size(S,1)
+    grad = zeros(n)
+    Kinv = inv(A*S*A')
+    for i=1:n
+        @show -Kinv * A[i] * transpose(A[i]) * Kinv
+        #grad[i] = -Kinv * A[i] * transpose(A[i]) * Kinv
+    end
+    return grad
+end
+
+A = randn(2,2)
+S = eye(2)
+b = randn(2)
+myGradient(A,S,b)
