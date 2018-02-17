@@ -7,9 +7,9 @@ function fgradient(A,s,b,g)
 end
 
 function fOfS(A,s,b,g)
+    S = Diagonal(s)
     n = size(S,1)
     e = ones(n)
-    S = Diagonal(s)
     return e'*S*e + (1/(2*g)) * b'*inv(A*S*A')*b
 end
 
@@ -22,7 +22,7 @@ function compressedSensing(A,b,g)
     c0 = fOfS(A,s0,b,g)
     dc0 = fgradient(A,s0,b,g)
 
-    model = model(solver = GurobiSolver(TimeLimit = 120, LazyConstraints = 1))
+    model = Model(solver = GurobiSolver(TimeLimit = 120, LazyConstraints = 1))
 
     @variable(model, s[1:n],Bin)
     @variable(model, t>=0)
@@ -37,8 +37,8 @@ function compressedSensing(A,b,g)
 
     function outer_approximation(cb)
         cutCount += 1
-        c = fOfS(A,s,b,g)
-        dc = fgradient(A,s,b,g)
+        c = fOfS(A,getvalue(s),b,g)
+        dc = fgradient(A,getvalue(s),b,g)
         if c < bestObj
             bestObj = c
             bestSolution = getvalue(s)[:]
@@ -59,3 +59,17 @@ function compressedSensing(A,b,g)
     end
     return getvalue(s)
 end
+
+
+m = 10
+n = 50
+A = randn(m,n)
+x0 = randn(n)
+x0[2] = 0
+x0[3] = 0
+x0[10] = 0
+x0[23] = 0
+b = A*x0
+
+result = compressedSensing(A,b,0.4)
+norm(result,0)
