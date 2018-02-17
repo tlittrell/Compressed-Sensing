@@ -109,10 +109,11 @@ function simulate(m,n,k,g,numSims)
 		fp += map(x -> falsePositive(x,k), results)
 		zeroNorm += map(x -> norm(x,0), results)
 	end
-	return DataFrame(Algo = ["Dual", "Lasso"], M = [m, m], N = [n,n], K = [k,k],
+	return @linq DataFrame(Algo = ["Dual", "Lasso"], M = [m, m], N = [n,n], K = [k,k],
 					 Gamma = [g, NaN], Sims = [numSims, numSims],
 					 Accuracy = acc/numSims, FalsePositive = fp/numSims,
-					 ZeroNorm = zeroNorm/numSims)
+					 ZeroNorm = zeroNorm/numSims) |>
+                 transform(KDivM = :K./:M, MDivN = :M./:N)
 end
 
 function simulate_multiple(mlist, nlist, klist, glist, numSims)
@@ -143,4 +144,5 @@ glist = [0.01]
 numSims = 5
 data1 = simulate_multiple(mlist, nlist, klist, glist, numSims)
 
-plot(data1, x = :M, y = :Accuracy, Geom.line, color = :Algo)
+plot(data1, x = :KDivM, y = :Accuracy, Geom.line, color = :Algo)
+plot(data1, x = :MDivN, y = :Accuracy, Geom.line, color = :Algo)
