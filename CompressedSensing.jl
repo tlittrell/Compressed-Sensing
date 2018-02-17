@@ -64,20 +64,27 @@ function compressedSensing(A,b,g)
 end
 
 
-function LassoCompressedSensing(A,b,g)
+function LassoCompressedSensing(A,b)
 
     m = size(A,1)
     n = size(A,2)
 
     model = Model(solver = GurobiSolver(TimeLimit = 120))
 
+    @variable(model, xPlus[1:n] >= 0)
+    @variable(model, xMinus[1:n] >= 0)
     @variable(model, x[1:n])
     @variable(model, t>=0)
 
     @objective(model, Min, t)
 
-    @constraint(model, A*x == b)
-    
+    @constraint(model, A*(xPlus - xMinus) .== b)
+    @constraint(model,t >= sum(xPlus) + sum(xMinus))
+    @constraint(model, x .== xPlus - xMinus)
+
+    solve(model)
+    return getvalue(x)
+
 end
 
 
@@ -91,3 +98,7 @@ b = A*x0
 result = compressedSensing(A,b,0.01)
 norm(result,0)
 find(result)
+
+resultLasso = LassoCompressedSensing(A,b)
+norm(resultLasso,0)
+find(resultLasso)
