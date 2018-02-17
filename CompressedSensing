@@ -2,7 +2,7 @@ using JuMP,Gurobi
 
 function fgradient(A,s,b,g)
     S = Diagonal(s)
-    Kinv = inv(A*S*A')
+    Kinv = pinv(A*S*A')
     return [(1 + b' * (1/(2*g)) * -Kinv * A[:,i] * transpose(A[:,i]) * Kinv * b) for i=1:n]
 end
 
@@ -10,7 +10,8 @@ function fOfS(A,s,b,g)
     S = Diagonal(s)
     n = size(S,1)
     e = ones(n)
-    return e'*S*e + (1/(2*g)) * b'*inv(A*S*A')*b
+    Kinv = pinv(A*S*A')
+    return e'*S*e + (1/(2*g)) * b'*Kinv*b
 end
 
 function compressedSensing(A,b,g)
@@ -28,7 +29,7 @@ function compressedSensing(A,b,g)
     @variable(model, t>=0)
 
     # ensure that our matrix is invertible
-    @constraint(model, sum(s) >= m)
+    #@constraint(model, sum(s) >= m)
 
     cutCount = 1
     bestObj = c0
@@ -61,15 +62,16 @@ function compressedSensing(A,b,g)
 end
 
 
-m = 10
-n = 50
+
+
+
+m = 150
+n = 500
+k = 10
 A = randn(m,n)
-x0 = randn(n)
-x0[2] = 0
-x0[3] = 0
-x0[10] = 0
-x0[23] = 0
+x0 = vcat(randn(k),zeros((n-k)))
 b = A*x0
 
-result = compressedSensing(A,b,0.4)
+result = compressedSensing(A,b,0.01)
 norm(result,0)
+find(result)
