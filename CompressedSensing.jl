@@ -115,10 +115,34 @@ function simulate(m,n,k,g,numSims)
 					 ZeroNorm = zeroNorm/numSims)
 end
 
+function simulate_multiple(mlist, nlist, klist, glist, numSims)
+	result = DataFrame()
+	for m in mlist
+		for n in nlist
+			for k in [x for x in klist if x <= m]
+				for g in glist
+					result = vcat(result, simulate(m,n,k,g,numSims))
+				end
+			end
+		end
+	end
+	return result
+end
 
 m = 10
 n = 30
-k = 10
+k = 4
 g = 0.01
-num_sims = 20
-simulate(m,n,k,g,num_sims)
+numSims = 10
+simulate(m,n,k,g,numSims)
+
+temp1 = DataFrame()
+temp2 = DataFrame(A=[3,4], B=[3,4])
+print(vcat(temp1,temp2))
+
+mlist = [10]
+nlist = [30]
+klist = [4]
+glist = [0.01]
+numSims = 10
+simulate_multiple(mlist, nlist, klist, glist, numSims)
