@@ -28,6 +28,8 @@ function compressedSensing(A,b,g)
     @variable(model, s[1:n],Bin)
     @variable(model, t>=0)
 
+    @objective(model, Min, t)
+
     # ensure that our matrix is invertible
     #@constraint(model, sum(s) >= m)
 
@@ -62,11 +64,25 @@ function compressedSensing(A,b,g)
 end
 
 
+function LassoCompressedSensing(A,b,g)
+
+    m = size(A,1)
+    n = size(A,2)
+
+    model = Model(solver = GurobiSolver(TimeLimit = 120))
+
+    @variable(model, x[1:n])
+    @variable(model, t>=0)
+
+    @objective(model, Min, t)
+
+    @constraint(model, A*x == b)
+    
+end
 
 
-
-m = 150
-n = 500
+m = 10
+n = 20
 k = 10
 A = randn(m,n)
 x0 = vcat(randn(k),zeros((n-k)))
