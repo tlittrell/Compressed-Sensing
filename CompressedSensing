@@ -1,15 +1,25 @@
-function myGradient(A,S,b)
-    n = size(S,1)
-    grad = zeros(n)
+using JuMP,Gurobi
+
+function fgradient(A,S,b)
     Kinv = inv(A*S*A')
-    for i=1:n
-        @show -Kinv * A[i] * transpose(A[i]) * Kinv
-        #grad[i] = -Kinv * A[i] * transpose(A[i]) * Kinv
-    end
-    return grad
+    return [(1 + b' * -Kinv * A[:,i] * transpose(A[:,i]) * Kinv * b) for i=1:n]
 end
 
-A = randn(2,2)
-S = eye(2)
-b = randn(2)
-myGradient(A,S,b)
+function compressedSensing(A,b; indices0 = )
+
+    m = size(A,1)
+    n = size(A,2)
+
+    s0 = zeros(n)
+
+
+    model = model(solver = GurobiSolver(TimeLimit = 120, LazyConstraints = 1))
+
+    @variable(model, s[1:n],Bin)
+    @variable(model, t>=0)
+
+    # ensure that our matrix is invertible
+    @constraint(model, sum(s) >= m)
+
+
+end
