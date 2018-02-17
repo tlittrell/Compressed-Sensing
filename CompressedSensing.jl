@@ -1,4 +1,4 @@
-using JuMP,Gurobi
+using JuMP,	Gurobi, DataFrames
 
 function fgradient(A,s,b,g)
     S = Diagonal(s)
@@ -14,7 +14,7 @@ function fOfS(A,s,b,g)
     return e'*S*e + (1/(2*g)) * b'*Kinv*b
 end
 
-function compressedSensing(A,b,g)
+function compressedSensing(A,b,g; verbose = 0)
 
     m = size(A,1)
     n = size(A,2)
@@ -23,7 +23,8 @@ function compressedSensing(A,b,g)
     c0 = fOfS(A,s0,b,g)
     dc0 = fgradient(A,s0,b,g)
 
-    model = Model(solver = GurobiSolver(TimeLimit = 120, LazyConstraints = 1))
+    model = Model(solver = GurobiSolver(TimeLimit = 120, LazyConstraints = 1,
+					OutputFlag = 1*verbose))
 
     @variable(model, s[1:n],Bin)
     @variable(model, t>=0)
@@ -64,12 +65,12 @@ function compressedSensing(A,b,g)
 end
 
 
-function LassoCompressedSensing(A,b)
+function LassoCompressedSensing(A,b; verbose = 0)
 
     m = size(A,1)
     n = size(A,2)
 
-    model = Model(solver = GurobiSolver(TimeLimit = 120))
+    model = Model(solver = GurobiSolver(TimeLimit = 120, OutputFlag = 1*verbose))
 
     @variable(model, xPlus[1:n] >= 0)
     @variable(model, xMinus[1:n] >= 0)
@@ -94,27 +95,30 @@ function falsePositive(result, k)
 	return size([x for x in find(result) if x > k],1) / size(find(result),1)
 end
 
+function simulate(m,n,k,g,numSims)
+	acc = zeros(2)
+	fp = zeros(2)
+	zeroNorm = zeros(2)
+	for i = 1:numSims
+		A = randn(m,n)
+		x0 = vcat(randn(k),zeros((n-k)))
+		b = A*x0
+
+		results = [compressedSensing(A,b,g), LassoCompressedSensing(A,b)]
+		acc += map(x -> accuracy(x,k), results)
+		fp += map(x -> falsePositive(x,k), results)
+		zeroNorm += map(x -> norm(x,0), results)
+	end
+	return DataFrame(Algo = ["Dual", "Lasso"], M = [m, m], N = [n,n], K = [k,k],
+					 Gamma = [g, NaN], Sims = [numSims, numSims],
+					 Accuracy = acc/numSims, FalsePositive = fp/numSims,
+					 ZeroNorm = zeroNorm/numSims)
+end
+
 
 m = 10
 n = 30
 k = 10
-A = randn(m,n)
-x0 = vcat(randn(k),zeros((n-k)))
-b = A*x0
-
-result = compressedSensing(A,b,0.01)
-norm(result,0)
-find(result)
-
-resultLasso = LassoCompressedSensing(A,b)
-norm(resultLasso,0)
-find(resultLasso)
-
-println()
-@show norm(resultLasso,0)
-@show accuracy(resultLasso, k)
-@show falsePositive(resultLasso, k)
-println()
-@show norm(result,0)
-@show accuracy(result,k)
-@show falsePositive(result,k)
+g = 0.01
+num_sims = 20
+simulate(m,n,k,g,num_sims)
