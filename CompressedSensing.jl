@@ -84,12 +84,19 @@ function LassoCompressedSensing(A,b)
 
     solve(model)
     return getvalue(x)
+end
 
+function accuracy(result,k)
+	return size([x for x in find(result) if x <= k],1)/k
+end
+
+function falsePositive(result, k)
+	return size([x for x in find(result) if x > k],1) / size(find(result),1)
 end
 
 
 m = 10
-n = 20
+n = 30
 k = 10
 A = randn(m,n)
 x0 = vcat(randn(k),zeros((n-k)))
@@ -102,3 +109,12 @@ find(result)
 resultLasso = LassoCompressedSensing(A,b)
 norm(resultLasso,0)
 find(resultLasso)
+
+println()
+@show norm(resultLasso,0)
+@show accuracy(resultLasso, k)
+@show falsePositive(resultLasso, k)
+println()
+@show norm(result,0)
+@show accuracy(result,k)
+@show falsePositive(result,k)
