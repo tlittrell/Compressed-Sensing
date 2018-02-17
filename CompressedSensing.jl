@@ -1,4 +1,4 @@
-using JuMP,	Gurobi, DataFrames
+using JuMP,	Gurobi, DataFrames, Gadfly, DataFramesMeta
 
 function fgradient(A,s,b,g)
     S = Diagonal(s)
@@ -136,13 +136,11 @@ g = 0.01
 numSims = 10
 simulate(m,n,k,g,numSims)
 
-temp1 = DataFrame()
-temp2 = DataFrame(A=[3,4], B=[3,4])
-print(vcat(temp1,temp2))
-
-mlist = [10]
+mlist = [10 20]
 nlist = [30]
 klist = [4]
 glist = [0.01]
-numSims = 10
-simulate_multiple(mlist, nlist, klist, glist, numSims)
+numSims = 5
+data1 = simulate_multiple(mlist, nlist, klist, glist, numSims)
+
+plot(data1, x = :M, y = :Accuracy, Geom.line, color = :Algo)
