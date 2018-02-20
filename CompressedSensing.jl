@@ -4,7 +4,9 @@ function fgradient(A,s,b,g)
     S = Diagonal(s)
     n = size(S,1)
     Kinv = pinv(A*S*A')
-    return [(1 + b' * (1/(2*g)) * -Kinv * A[:,i] * transpose(A[:,i]) * Kinv * b) for i=1:n]
+    alpha = (-1/(2*g)) * Kinv * b
+    #return [(1 + b' * (1/(2*g)) * -Kinv * A[:,i] * transpose(A[:,i]) * Kinv * b) for i=1:n]
+    return [(1 - g/2*dot(A[:,j],alpha)^2) for j=1:n]
 end
 
 function fOfS(A,s,b,g)
@@ -33,9 +35,6 @@ function compressedSensing(A,b,g; verbose = 0)
     @variable(model, t>=0)
 
     @objective(model, Min, t)
-
-    # ensure that our matrix is invertible
-    #@constraint(model, sum(s) >= m)
 
     cutCount = 1
     bestObj = c0
@@ -143,11 +142,11 @@ mlist = [100]
 nlist = [150]
 klist = [1 10 50 90]
 glist = [0.01]
-numSims = 5
+numSims = 1
 data1 = simulate_multiple(mlist, nlist, klist, glist, numSims)
 
-plt1 = plot(data1, x = :KdivM, y = :Accuracy, Geom.line, color = :Algo);
-plt2 = plot(data1, x = :MdivN, y = :Accuracy, Geom.line, color = :Algo);
+plt1 = plot(data1, x = :KdivM, y = :Accuracy, Geom.line, color = :Algo)
+plt2 = plot(data1, x = :MdivN, y = :Accuracy, Geom.line, color = :Algo)
 
 draw(PNG("plot1.png", 3inch, 3inch), plt1)
 draw(PNG("plot2.png", 3inch, 3inch), plt2)
