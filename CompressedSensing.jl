@@ -127,7 +127,11 @@ function simulate_multiple(mlist, nlist, klist, glist, numSims)
 		for n in nlist
 			for k in [x for x in klist if x <= m]
 				for g in glist
-					result = vcat(result, simulate(m,n,k,g,numSims))
+                    try
+                        @show [m,n,k,g]
+					    result = vcat(result, simulate(m,n,k,g,numSims))
+                    catch
+                    end
 				end
 			end
 		end
