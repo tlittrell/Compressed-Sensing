@@ -2,6 +2,7 @@ using JuMP,	Gurobi, DataFrames, Gadfly, DataFramesMeta
 
 function fgradient(A,s,b,g)
     S = Diagonal(s)
+    n = size(S,1)
     Kinv = pinv(A*S*A')
     return [(1 + b' * (1/(2*g)) * -Kinv * A[:,i] * transpose(A[:,i]) * Kinv * b) for i=1:n]
 end
@@ -18,6 +19,8 @@ function compressedSensing(A,b,g; verbose = 0)
 
     m = size(A,1)
     n = size(A,2)
+
+    @assert n > m
 
     s0 = ones(n)
     c0 = fOfS(A,s0,b,g)
@@ -69,6 +72,8 @@ function LassoCompressedSensing(A,b; verbose = 0)
 
     m = size(A,1)
     n = size(A,2)
+
+    @assert n > m
 
     model = Model(solver = GurobiSolver(TimeLimit = 120, OutputFlag = 1*verbose))
 
@@ -130,22 +135,15 @@ function simulate_multiple(mlist, nlist, klist, glist, numSims)
 	return result
 end
 
-m = 10
-n = 30
-k = 4
-g = 0.01
-numSims = 10
-simulate(m,n,k,g,numSims)
-
 mlist = [100]
-nlist = [30]
+nlist = [150]
 klist = [1 10 50 90]
 glist = [0.01]
-numSims = 1
+numSims = 5
 data1 = simulate_multiple(mlist, nlist, klist, glist, numSims)
 
-plt1 = plot(data1, x = :KdivM, y = :Accuracy, Geom.line, color = :Algo)
-plt2 = plot(data1, x = :MdivN, y = :Accuracy, Geom.line, color = :Algo)
+plt1 = plot(data1, x = :KdivM, y = :Accuracy, Geom.line, color = :Algo);
+plt2 = plot(data1, x = :MdivN, y = :Accuracy, Geom.line, color = :Algo);
 
 draw(PNG("plot1.png", 3inch, 3inch), plt1)
 draw(PNG("plot2.png", 3inch, 3inch), plt2)
