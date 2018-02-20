@@ -113,7 +113,7 @@ function simulate(m,n,k,g,numSims)
 					 Gamma = [g, NaN], Sims = [numSims, numSims],
 					 Accuracy = acc/numSims, FalsePositive = fp/numSims,
 					 ZeroNorm = zeroNorm/numSims) |>
-                 transform(KDivM = :K./:M, MDivN = :M./:N)
+                 transform(KdivM = :K./:M, MdivN = :M./:N)
 end
 
 function simulate_multiple(mlist, nlist, klist, glist, numSims)
@@ -137,12 +137,15 @@ g = 0.01
 numSims = 10
 simulate(m,n,k,g,numSims)
 
-mlist = [10 20]
+mlist = [100]
 nlist = [30]
-klist = [4]
+klist = [1 10 50 90]
 glist = [0.01]
-numSims = 5
+numSims = 1
 data1 = simulate_multiple(mlist, nlist, klist, glist, numSims)
 
-plot(data1, x = :KDivM, y = :Accuracy, Geom.line, color = :Algo)
-plot(data1, x = :MDivN, y = :Accuracy, Geom.line, color = :Algo)
+plt1 = plot(data1, x = :KdivM, y = :Accuracy, Geom.line, color = :Algo)
+plt2 = plot(data1, x = :MdivN, y = :Accuracy, Geom.line, color = :Algo)
+
+draw(PNG("plot1.png", 3inch, 3inch), plt1)
+draw(PNG("plot2.png", 3inch, 3inch), plt2)
