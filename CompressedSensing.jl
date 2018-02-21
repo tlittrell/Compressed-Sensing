@@ -1,9 +1,9 @@
-using JuMP,	Gurobi, DataFrames, Gadfly, DataFramesMeta
+using JuMP,	Gurobi, DataFrames, Gadfly, DataFramesMeta, Plots
 
 function fgradient(A,s,b,g)
     S = Diagonal(s)
     n = size(S,1)
-    Kinv = inv(A*S*A')
+    Kinv = pinv(A*S*A')
     alpha = (-1/(g)) * Kinv * b
     #return [(1 + b' * (1/(2*g)) * -Kinv * A[:,i] * transpose(A[:,i]) * Kinv * b) for i=1:n]
     return [(1 - g/2*dot(A[:,j],alpha)^2) for j=1:n]
@@ -13,7 +13,7 @@ function fOfS(A,s,b,g)
     S = Diagonal(s)
     n = size(S,1)
     e = ones(n)
-    Kinv = inv(A*S*A')
+    Kinv = pinv(A*S*A')
     return e'*S*e + (1/(2*g)) * b'*Kinv*b
 end
 
@@ -142,16 +142,78 @@ function simulate_multiple(mlist, nlist, klist, glist, numSims)
 	return result
 end
 
+function draw_pictures(;mlist=[0], nlist=[0], klist=[0], glist=[0], numSims=0)
+    data = simulate_multiple(mlist, nlist, klist, glist, numSims)
+
+    plt1 = plot(data, x = :KdivM, y = :Accuracy, Geom.line, color = :Algo);
+    plt2 = plot(data, x = :KdivM, y = :FalsePositive, Geom.line, color = :Algo);
+
+    plt3 = plot(data, x = :MdivN, y = :Accuracy, Geom.line, color = :Algo);
+    plt4 = plot(data, x = :MdivN, y = :FalsePositive, Geom.line, color = :Algo);
+
+    if size(klist,1) > 1
+        draw(PNG("Accuracy KdivM (m=$mlist n=$nlist g=$glist k=$klist).png", 3inch, 3inch), plt1)
+        draw(PNG("False Positive KdivM (m=$mlist n=$nlist g=$glist k=$klist).png", 3inch, 3inch), plt2)
+    elseif size(nlist,1) > 1
+        draw(PNG("Accuracy MdivN (m=$mlist n=$nlist g=$glist k=$klist).png", 3inch, 3inch), plt3)
+        draw(PNG("False Positive MdivN (m=$mlist n=$nlist g=$glist k=$klist).png", 3inch, 3inch), plt4)
+    end
+end
+
+
+numSims = 40
+
+###################################
+
+klist = [2,4,6,8,10]
 mlist = [10]
 nlist = [15]
-klist = [2,4,6,8,10]
-glist = [0.001, 0.01]
-numSims = 10
-
-data1 = simulate_multiple(mlist, nlist, klist, glist, numSims)
-plt1 = plot(data1, x = :KdivM, y = :Accuracy, Geom.line, color = :Algo)
-plt1 = plot(data1, x = :KdivM, y = :FalsePositive, Geom.line, color = :Algo)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.001],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.01],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.1],numSims=numSims)
 
 
-draw(PNG("plot1.png", 3inch, 3inch), plt1)
-draw(PNG("plot2.png", 3inch, 3inch), plt2)
+klist = [5]
+mlist = [10]
+nlist = [10,15,25,50,75,100]
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.001],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.01],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.1],numSims=numSims)
+
+
+###################################
+scale = 5
+
+klist = [2,4,6,8,10]*scale
+mlist = [10]*scale
+nlist = [15]*scale
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.001],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.01],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.1],numSims=numSims)
+
+
+klist = [5]*scale
+mlist = [10]*scale
+nlist = [10,15,25,50,75,100]*scale
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.001],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.01],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.1],numSims=numSims)
+
+
+###################################
+scale = 10
+
+klist = [2,4,6,8,10]*scale
+mlist = [10]*scale
+nlist = [15]*scale
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.001],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.01],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.1],numSims=numSims)
+
+
+klist = [5]*scale
+mlist = [10]*scale
+nlist = [10,15,25,50,75,100]*scale
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.001],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.01],numSims=numSims)
+draw_pictures(mlist=mlist,nlist=nlist,klist=klist,glist=[0.1],numSims=numSims)
