@@ -3,8 +3,8 @@ using JuMP,	Gurobi, DataFrames, Gadfly, DataFramesMeta
 function fgradient(A,s,b,g)
     S = Diagonal(s)
     n = size(S,1)
-    Kinv = pinv(A*S*A')
-    alpha = (-1/(2*g)) * Kinv * b
+    Kinv = inv(A*S*A')
+    alpha = (-1/(g)) * Kinv * b
     #return [(1 + b' * (1/(2*g)) * -Kinv * A[:,i] * transpose(A[:,i]) * Kinv * b) for i=1:n]
     return [(1 - g/2*dot(A[:,j],alpha)^2) for j=1:n]
 end
@@ -13,7 +13,7 @@ function fOfS(A,s,b,g)
     S = Diagonal(s)
     n = size(S,1)
     e = ones(n)
-    Kinv = pinv(A*S*A')
+    Kinv = inv(A*S*A')
     return e'*S*e + (1/(2*g)) * b'*Kinv*b
 end
 
@@ -37,18 +37,18 @@ function compressedSensing(A,b,g; verbose = 0)
     @objective(model, Min, t)
 
     cutCount = 1
-    bestObj = c0
-    bestSolution = s0[:]
+    #bestObj = c0
+    #bestSolution = s0[:]
     @constraint(model, t >= c0 + dot(dc0,s-s0))
 
     function outer_approximation(cb)
         cutCount += 1
         c = fOfS(A,getvalue(s),b,g)
         dc = fgradient(A,getvalue(s),b,g)
-        if c < bestObj
-            bestObj = c
-            bestSolution = getvalue(s)[:]
-        end
+        #if c < bestObj
+        #    bestObj = c
+        #    bestSolution = getvalue(s)[:]
+        #end
         @lazyconstraint(cb, t >= c + dot(dc, s-getvalue(s)))
     end
     addlazycallback(model, outer_approximation)
@@ -130,6 +130,10 @@ function simulate_multiple(mlist, nlist, klist, glist, numSims)
                         @show [m,n,k,g]
 					    result = vcat(result, simulate(m,n,k,g,numSims))
                     catch
+                        println()
+                        println("The following simulation failed")
+                        @show [m,n,k,g]
+                        println()
                     end
 				end
 			end
@@ -138,15 +142,16 @@ function simulate_multiple(mlist, nlist, klist, glist, numSims)
 	return result
 end
 
-mlist = [100]
-nlist = [150]
-klist = [1 10 50 90]
-glist = [0.01]
-numSims = 1
-data1 = simulate_multiple(mlist, nlist, klist, glist, numSims)
+mlist = [10]
+nlist = [15]
+klist = [2,4,6,8,10]
+glist = [0.001, 0.01]
+numSims = 10
 
+data1 = simulate_multiple(mlist, nlist, klist, glist, numSims)
 plt1 = plot(data1, x = :KdivM, y = :Accuracy, Geom.line, color = :Algo)
-plt2 = plot(data1, x = :MdivN, y = :Accuracy, Geom.line, color = :Algo)
+plt1 = plot(data1, x = :KdivM, y = :FalsePositive, Geom.line, color = :Algo)
+
 
 draw(PNG("plot1.png", 3inch, 3inch), plt1)
 draw(PNG("plot2.png", 3inch, 3inch), plt2)
